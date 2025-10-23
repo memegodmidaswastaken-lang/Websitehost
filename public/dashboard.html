@@ -1,46 +1,70 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Server Admin Dashboard</title>
-<link rel="stylesheet" href="styles.css">
-<script src="codemirror/codemirror.js"></script>
-<link rel="stylesheet" href="codemirror/codemirror.css">
+  <meta charset="utf-8" />
+  <title>Server Admin Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Include CodeMirror assets; you can host in /public/codemirror or use CDN -->
+  <link rel="stylesheet" href="codemirror/lib/codemirror.css">
+  <script src="codemirror/lib/codemirror.js"></script>
+  <script src="codemirror/mode/javascript/javascript.js"></script>
+  <script src="codemirror/mode/yaml/yaml.js"></script>
+  <script src="codemirror/mode/clike/clike.js"></script>
 </head>
 <body>
-<h1>Server Admin Dashboard</h1>
+  <h1>Server Admin Dashboard</h1>
+  <div id="topInfo"></div>
 
-<div id="fileEditor" class="panel">
-<h3>Server File Editor</h3>
-<select id="editFileSelect" onchange="loadFileContent()"></select>
-<div id="codeMirrorEditor" style="height:300px;"></div>
-<button onclick="saveFileContent()">Save</button>
-<div id="errorPanel"></div>
-<div id="aiExplanation"></div>
-<div id="aiSuggestionPanel"></div>
-</div>
+  <div class="grid">
+    <div class="panel" id="fileEditor">
+      <h3>File Editor</h3>
+      <select id="editFileSelect"></select>
+      <button onclick="refreshFiles()">Refresh</button>
+      <div id="codeMirrorEditor" style="height:300px;"></div>
+      <div style="margin-top:8px;">
+        <button onclick="saveFileContent()">Save</button>
+        <button onclick="uploadNewFile()">Upload New</button>
+      </div>
+      <div id="errorPanel"></div>
+      <div id="aiSuggestionPanel" style="display:none"></div>
+    </div>
 
-<div id="backupPanel" class="panel">
-<h3>Backups</h3>
-<button onclick="refreshBackups()">Refresh Backups</button>
-<ul id="backupList"></ul>
-<div id="backupDiff"></div>
-</div>
+    <div class="panel" id="backupPanel">
+      <h3>Backups</h3>
+      <button onclick="refreshBackups()">Refresh Backups</button>
+      <ul id="backupList"></ul>
+      <div id="backupDiff" style="max-height:300px; overflow:auto"></div>
+    </div>
 
-<div id="consolePanel" class="panel">
-<h3>Server Console</h3>
-<div id="consoleOutput" style="height:200px; overflow:auto; background:#000; color:#0f0;"></div>
-<input type="text" id="consoleInput" placeholder="Enter command">
-<button onclick="sendCommand()">Send</button>
-</div>
+    <div class="panel" id="consolePanel">
+      <h3>Server Console</h3>
+      <div id="consoleOutput" style="height:200px; overflow:auto; background:#000; color:#0f0; padding:6px;"></div>
+      <input id="consoleInput" placeholder="Enter server command">
+      <button onclick="sendCommand()">Send</button>
+    </div>
 
-<div id="chatPanel" class="panel">
-<h3>Live Chat</h3>
-<div id="chatOutput" style="height:200px; overflow:auto; background:#111; color:#fff;"></div>
-<input type="text" id="chatInput" placeholder="Type message">
-<button onclick="sendChat()">Send</button>
-</div>
+    <div class="panel" id="chatPanel">
+      <h3>Admin Chat</h3>
+      <div id="chatOutput" style="height:200px; overflow:auto; background:#111; padding:6px;"></div>
+      <input id="chatInput" placeholder="Type message">
+      <button onclick="sendChat()">Send</button>
+    </div>
 
-<script src="dashboard.js"></script>
+    <div class="panel" id="ownerSection" style="display:none">
+      <h3>Owner: Credentials & File Manager</h3>
+      <input id="hostIP" placeholder="Host IP"><br>
+      <input id="hostUser" placeholder="Host Username"><br>
+      <input id="hostPass" placeholder="Host Password" type="password"><br>
+      <button onclick="saveOwnerCreds()">Save Owner Credentials</button>
+      <div id="ownerCredsMsg"></div>
+
+      <h4>File Manager (owner)</h4>
+      <input type="file" id="fileUploadInput">
+      <button onclick="uploadFileAsOwner()">Upload</button>
+      <div id="fileList"></div>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
 </body>
 </html>
