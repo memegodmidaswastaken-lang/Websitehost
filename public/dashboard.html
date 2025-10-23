@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Server Admin Dashboard</title>
+<link rel="stylesheet" href="styles.css">
+<script src="codemirror/codemirror.js"></script>
+<link rel="stylesheet" href="codemirror/codemirror.css">
+</head>
+<body>
+<h1>Server Admin Dashboard</h1>
+
+<div id="fileEditor" class="panel">
+<h3>Server File Editor</h3>
+<select id="editFileSelect" onchange="loadFileContent()"></select>
+<div id="codeMirrorEditor" style="height:300px;"></div>
+<button onclick="saveFileContent()">Save</button>
+<div id="errorPanel"></div>
+<div id="aiExplanation"></div>
+<div id="aiSuggestionPanel"></div>
+</div>
+
+<div id="backupPanel" class="panel">
+<h3>Backups</h3>
+<button onclick="refreshBackups()">Refresh Backups</button>
+<ul id="backupList"></ul>
+<div id="backupDiff"></div>
+</div>
+
+<div id="consolePanel" class="panel">
+<h3>Server Console</h3>
+<div id="consoleOutput" style="height:200px; overflow:auto; background:#000; color:#0f0;"></div>
+<input type="text" id="consoleInput" placeholder="Enter command">
+<button onclick="sendCommand()">Send</button>
+</div>
+
+<div id="chatPanel" class="panel">
+<h3>Live Chat</h3>
+<div id="chatOutput" style="height:200px; overflow:auto; background:#111; color:#fff;"></div>
+<input type="text" id="chatInput" placeholder="Type message">
+<button onclick="sendChat()">Send</button>
+</div>
+
+<script src="dashboard.js"></script>
+</body>
+</html>
