@@ -1,5 +1,9 @@
-body { font-family: Arial; background:#1e1e1e; color:white; }
-.panel { border:1px solid #333; padding:10px; margin:10px; border-radius:6px; }
-input, select, button { margin:5px 0; padding:5px; border-radius:4px; }
-button { cursor:pointer; background:#4caf50; color:white; border:none; }
-.error { color:red; }
+body { font-family: Arial, sans-serif; background:#1e1e1e; color:#fff; margin:12px; }
+h1 { margin:0 0 12px 0; }
+.grid { display:grid; grid-template-columns: 1fr 380px; gap:12px; }
+.panel { background:#252525; border:1px solid #333; padding:10px; border-radius:6px; }
+#fileEditor { grid-column: 1 / 2; }
+#backupPanel, #consolePanel, #chatPanel, #ownerSection { margin-top:12px; }
+input, select, button, textarea { padding:6px; margin:4px 0; border-radius:4px; border:1px solid #444; background:#111; color:#fff; }
+button { background:#4caf50; border:none; cursor:pointer; }
+.error { color:#f66; }
