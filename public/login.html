@@ -1,36 +1,56 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8" />
-  <title>Staff Login</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8">
+  <title>Login - Server Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
-<body>
-  <div id="loginBox">
-    <h2>Staff Login</h2>
-    <input id="username" placeholder="Username">
-    <input id="password" type="password" placeholder="Password">
-    <button onclick="login()">Login</button>
-    <p id="loginMessage" class="error"></p>
+<body class="light">
+  <div class="login-wrap">
+    <div class="panel login-panel">
+      <h2>Server Dashboard</h2>
+      <div>
+        <input id="username" placeholder="Username" autofocus>
+        <input id="password" placeholder="Password" type="password">
+        <div class="row">
+          <button id="loginBtn">Login</button>
+          <button id="registerBtn" class="small">Request Access</button>
+        </div>
+        <p id="status" style="color:crimson;"></p>
+      </div>
+      <div style="margin-top:8px; color:var(--muted); font-size:13px;">
+        Light/Dark & background available in dashboard.
+      </div>
+    </div>
   </div>
 
-  <script>
-    async function login(){
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      const res = await fetch('/login', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({username,password})
-      });
-      const data = await res.json();
-      if(data.success){
-        localStorage.setItem('token', data.token);
-        window.location.href = '/dashboard.html';
-      } else {
-        document.getElementById('loginMessage').textContent = data.message;
-      }
-    }
-  </script>
+<script>
+document.getElementById('loginBtn').addEventListener('click', login);
+document.getElementById('registerBtn').addEventListener('click', register);
+document.addEventListener('keydown', (e)=> { if(e.key==='Enter') login(); });
+
+async function login(){
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value.trim();
+  if(!u||!p) { document.getElementById('status').textContent='Fill both fields'; return; }
+  const res = await fetch('/api/login',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ username:u, password:p }) });
+  const j = await res.json();
+  if(res.ok) {
+    localStorage.setItem('token', j.token);
+    window.location.href = '/dashboard.html';
+  } else {
+    document.getElementById('status').textContent = j.error || 'Login failed';
+  }
+}
+
+async function register(){
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value.trim();
+  if(!u||!p) { document.getElementById('status').textContent='Fill both fields'; return; }
+  const res = await fetch('/api/register',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ username:u, password:p }) });
+  const j = await res.json();
+  document.getElementById('status').textContent = j.message || j.error;
+}
+</script>
 </body>
 </html>
