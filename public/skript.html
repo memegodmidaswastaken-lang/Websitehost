@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Skript Editor</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/codemirror/lib/codemirror.css">
+  <script src="/codemirror/lib/codemirror.js"></script>
+  <script src="/codemirror/mode/javascript/javascript.js"></script>
+  <script src="/codemirror/mode/clike/clike.js"></script>
+  <style>
+    #editorWrap { height: 420px; border:1px solid rgba(0,0,0,0.06); }
+    .skript-error { background:rgba(255,0,0,0.15); }
+  </style>
+</head>
+<body>
+  <div class="topbar panel">
+    <div><a href="/dashboard.html">◀ Back to Dashboard</a></div>
+    <div><span id="skriptUser"></span></div>
+  </div>
+  <div class="container">
+    <div class="panel">
+      <h3>Skript Editor</h3>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <select id="skriptSelect"></select>
+        <button onclick="loadSelected()">Load</button>
+        <button onclick="saveFile()">Save & Reload</button>
+        <button onclick="refreshList()">Refresh</button>
+      </div>
+      <div id="editorWrap"></div>
+      <div id="skriptErrors" style="margin-top:8px; color:crimson;"></div>
+    </div>
+
+    <div class="panel">
+      <h4>Backups & Diff</h4>
+      <button onclick="refreshBackups()">Refresh Backups</button>
+      <ul id="backupsList"></ul>
+      <div id="backupDiff"></div>
+    </div>
+  </div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const prefile = params.get('file') || '';
+
+const token = localStorage.getItem('token');
+if(!token) location.href = '/login.html';
+const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+const ws = new WebSocket(`${proto}://${location.host}/?token=${token}`);
+
+let editor;
+let currentFile = '';
+
+window.onload = ()=> {
+  initEditor();
+  ws.onopen = ()=> { refreshList(); if(prefile) { document.getElementById('skriptSelect').value = prefile; loadSelected(); } };
+  ws.onmessage = (evt) => {
+    const d = JSON.parse(evt.data);
+    if (d.type === 'file_list') populateList(d.files);
+    if (d.type === 'file_content') setEditorContent(d.filename, d.content);
+    if (d.type === 'skript_errors') displayErrors(d.errors);
+    if (d.type === 'backup_list') populateBackups(d.backups);
+    if (d.type === 'backup_content') showBackupDiff(d.content);
+    if (d.type === 'console_output') appendConsole(d.output);
+    if (d.type === 'file_saved') alert('Saved ' + d.filename);
+  };
+};
+
+function initEditor(){
+  editor = CodeMirror(document.getElementById('editorWrap'), { value:'', lineNumbers:true, mode:'clike' });
+  editor.on('change', debounce(()=> checkSyntax(), 400));
+}
+
+function refreshList(){ ws.send(JSON.stringify({ type:'list_files' })); }
+function populateList(files){
+  const s = document.getElementById('skriptSelect'); s.innerHTML = '';
+  files.forEach(f=> { const o = document.createElement('option'); o.value = f; o.textContent = f; s.appendChild(o); });
+  if(prefile) s.value = prefile;
+}
+
+function loadSelected(){ const f = document.getElementById('skriptSelect').value; if(!f) return; ws.send(JSON.stringify({ type:'download_file', filename: f })); currentFile = f; refreshBackups(); }
+function setEditorContent(filename, content){ currentFile = filename; editor.setValue(content); checkSyntax(); }
+function saveFile(){ if(!currentFile) return alert('Select file'); const content = editor.getValue(); ws.send(JSON.stringify({ type:'save_file', filename: currentFile, content })); }
+
+// Check syntax (server-side linter)
+function checkSyntax(){ ws.send(JSON.stringify({ type:'check_skript', code: editor.getValue() })); }
+function displayErrors(errors){
+  const out = document.getElementById('skriptErrors'); out.innerHTML = '';
+  if(!errors || errors.length===0){ out.textContent = 'No syntax errors'; clearMarks(); return; }
+  errors.forEach(e=> {
+    const div = document.createElement('div');
+    div.innerHTML = `Line ${e.line}: ${e.message} <button onclick="gotoLine(${e.line})">Go</button>`;
+    out.appendChild(div);
+  });
+  highlightErrors(errors);
+}
+let marks = [];
+function clearMarks(){ marks.forEach(m=>m.clear()); marks = []; }
+function highlightErrors(errors){
+  clearMarks();
+  errors.forEach(e=>{
+    const ln = e.line - 1;
+    marks.push(editor.markText({line:ln,ch:0},{line:ln,ch:editor.getLine(ln).length},{className:'skript-error',title:e.message}));
+  });
+}
+function gotoLine(line){ editor.setCursor({line:line-1,ch:0}); editor.focus(); alert('Error: see highlighted line'); }
+
+// Backups
+function refreshBackups(){ if(!currentFile) return; ws.send(JSON.stringify({ type:'list_backups', filename: currentFile })); }
+function populateBackups(list){
+  const ul = document.getElementById('backupsList'); ul.innerHTML='';
+  list.forEach(b=>{ const li = document.createElement('li'); li.innerHTML = `${b} <button onclick="viewBackup('${b}')">View</button> <button onclick="restoreBackup('${b}')">Restore</button>`; ul.appendChild(li); });
+}
+function viewBackup(b){ ws.send(JSON.stringify({ type:'get_backup_content', backupFile: b })); }
+function restoreBackup(b){ if(!confirm('Restore backup?')) return; ws.send(JSON.stringify({ type:'restore_backup', backupFile: b, filename: currentFile })); }
+function showBackupDiff(content){ const container = document.getElementById('backupDiff'); container.innerHTML=''; const curLines = editor.getValue().split('\\n'); const bakLines = content.split('\\n'); const max = Math.max(curLines.length, bakLines.length); for(let i=0;i<max;i++){ const a = bakLines[i]||''; const c = curLines[i]||''; const div = document.createElement('div'); if(a===c) div.textContent=c; else div.innerHTML = wordDiffClickable(a,c,i); container.appendChild(div); } }
+function wordDiffClickable(a,b,lineIdx){ const aw = a.split(/(\\s+)/); const bw = b.split(/(\\s+)/); const len = Math.max(aw.length,bw.length); let html=''; for(let i=0;i<len;i++){ const o=aw[i]||''; const n=bw[i]||''; if(o!==n){ const safe = o.replace(/'/g,\"\\\\'\"); html += `<span style=\"background:red;color:#fff;cursor:pointer\" onclick=\"revertWord(${lineIdx},${i},'${safe}')\">${o}</span> → <span style=\"background:green;color:#fff\">${n}</span> `; } else html += o; } return html; }
+function revertWord(lineIdx, wordIdx, oldWord){ const lines = editor.getValue().split('\\n'); const words = lines[lineIdx].split(/(\\s+)/); words[wordIdx] = oldWord; lines[lineIdx] = words.join(''); editor.setValue(lines.join('\\n')); }
+
+// console output from server
+function appendConsole(x){ const out = document.getElementById('skriptErrors'); const d = document.createElement('div'); d.textContent = x; out.appendChild(d); }
+
+// debounce
+function debounce(fn,ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+</script>
+</body>
+</html>
