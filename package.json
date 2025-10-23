@@ -1,16 +1,17 @@
 {
-  "name": "server-dashboard",
+  "name": "minecraft-dashboard",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "bcrypt": "^5.1.0",
     "body-parser": "^1.20.2",
-    "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.0",
-    "ws": "^8.13.0"
+    "bcrypt": "^5.1.0",
+    "ws": "^8.13.0",
+    "rcon-client": "^5.1.1",
+    "dotenv": "^16.3.1"
   }
 }
