@@ -1,0 +1,10 @@
+{
+  "owner": {
+    "passwordHash": "$2b$10$u7hWXtqkYq4e8QzYbQ6gE.kXQDAh6Oq0gk9QH9lqftgqP4zH6MZ8e",
+    "role": "owner"
+  },
+  "admin": {
+    "passwordHash": "$2b$10$0uZr3f0Y5z1yUQ6zqqr6s.OcO.9gq6Jyq3x7a9qY6F6Vb6rPZ9JGa",
+    "role": "admin"
+  }
+}
